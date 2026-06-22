@@ -2,7 +2,17 @@
 
 Independent QA research comparing **TypeScript 6.0** and **TypeScript 7.0 RC** across compatibility, diagnostics, performance, parallelization, and CI environments.
 
-> Status: baseline QA harness is ready. Benchmark results are generated locally and in GitHub Actions.
+> Status: the first cross-platform baseline has been completed and published.
+
+## Latest published result
+
+The 2026-06-22 baseline generated 1,500 TypeScript modules and measured every scenario 10 times on GitHub-hosted Ubuntu, Windows, and macOS runners.
+
+- TypeScript 7.0.1 RC default was **5.58x–6.16x faster** than TypeScript 6.0.3 by median wall-clock duration.
+- The tested diagnostic codes and text matched on all three operating systems.
+- A known CLI exit-status difference reproduced consistently and is tracked in [issue #2](../../issues/2).
+
+Read the complete methodology, tables, limitations, and artifact digests in the [cross-platform benchmark report](docs/results/2026-06-22-full-benchmark.md).
 
 ## Research questions
 
@@ -19,7 +29,7 @@ npm install
 npm run qa
 ```
 
-The command generates a deterministic TypeScript workload, checks valid fixtures with both compilers, compares diagnostic codes for intentionally invalid fixtures, and writes benchmark reports to `results/`.
+The command generates a deterministic TypeScript workload, checks valid fixtures with both compilers, compares diagnostics for intentionally invalid fixtures, and writes benchmark reports to `results/`.
 
 ## Useful commands
 
@@ -45,6 +55,8 @@ $env:BENCHMARK_RUNS=10
 $env:GENERATED_MODULES=1500
 npm run qa
 ```
+
+GitHub Actions runs a smaller smoke benchmark on pushes and pull requests. A configurable full benchmark can be started manually through `workflow_dispatch`.
 
 ## Methodology principles
 
