@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      generated_modules:
+        description: Number of generated TypeScript modules
+        required: true
+        default: "1500"
+      benchmark_runs:
+        description: Number of measured runs per scenario
+        required: true
+        default: "10"
 
 permissions:
   contents: read
@@ -33,8 +42,8 @@ jobs:
       - name: Run QA harness
         run: npm run qa
         env:
-          GENERATED_MODULES: 1500
-          BENCHMARK_RUNS: 10
+          GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '500' }}
+          BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
 
       - name: Upload reports
         if: always()
