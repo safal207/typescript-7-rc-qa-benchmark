@@ -15,9 +15,10 @@
     "typecheck:heavy:ts6": "tsc6 -p tsconfig.type-heavy.json --noEmit --pretty false",
     "typecheck:heavy:ts7": "tsc -p tsconfig.type-heavy.json --noEmit --pretty false",
     "compare:diagnostics": "node scripts/compare-diagnostics.mjs",
+    "collect:extended-diagnostics": "node scripts/collect-extended-diagnostics.mjs",
     "benchmark": "node scripts/benchmark.mjs",
     "verify:outputs": "node scripts/verify-outputs.mjs",
-    "qa": "npm run generate && npm run versions && npm run typecheck:ts6 && npm run typecheck:ts7 && npm run typecheck:heavy:ts6 && npm run typecheck:heavy:ts7 && npm run compare:diagnostics && npm run benchmark && npm run verify:outputs"
+    "qa": "npm run generate && npm run versions && npm run typecheck:ts6 && npm run typecheck:ts7 && npm run typecheck:heavy:ts6 && npm run typecheck:heavy:ts7 && npm run compare:diagnostics && npm run collect:extended-diagnostics && npm run benchmark && npm run verify:outputs"
   },
   "devDependencies": {
     "@typescript/typescript6": "^6.0.0",
