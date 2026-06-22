@@ -7,6 +7,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const resultsDir = path.join(root, "results");
 const isWindows = process.platform === "win32";
 
+function normalizeDiagnosticOutput(output) {
+  return output.replace(/\r\n/g, "\n");
+}
+
 function runCompiler(name) {
   const executable = path.join(root, "node_modules", ".bin", `${name}${isWindows ? ".cmd" : ""}`);
   const result = spawnSync(
@@ -34,7 +38,8 @@ function runCompiler(name) {
 const ts6 = runCompiler("tsc6");
 const ts7 = runCompiler("tsc");
 const diagnosticCodesCompatible = JSON.stringify(ts6.codes) === JSON.stringify(ts7.codes);
-const diagnosticTextCompatible = ts6.output === ts7.output;
+const diagnosticTextCompatible =
+  normalizeDiagnosticOutput(ts6.output) === normalizeDiagnosticOutput(ts7.output);
 const exitCodeCompatible = ts6.exitCode === ts7.exitCode;
 const compatible = diagnosticCodesCompatible && diagnosticTextCompatible;
 const report = {
@@ -42,6 +47,7 @@ const report = {
   diagnosticCodesCompatible,
   diagnosticTextCompatible,
   exitCodeCompatible,
+  textNormalization: "CRLF and LF line endings are treated as equivalent",
   comparedAt: new Date().toISOString(),
   ts6,
   ts7
