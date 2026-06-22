@@ -33,9 +33,15 @@ function runCompiler(name) {
 
 const ts6 = runCompiler("tsc6");
 const ts7 = runCompiler("tsc");
-const compatible = JSON.stringify(ts6.codes) === JSON.stringify(ts7.codes);
+const diagnosticCodesCompatible = JSON.stringify(ts6.codes) === JSON.stringify(ts7.codes);
+const diagnosticTextCompatible = ts6.output === ts7.output;
+const exitCodeCompatible = ts6.exitCode === ts7.exitCode;
+const compatible = diagnosticCodesCompatible && diagnosticTextCompatible;
 const report = {
   compatible,
+  diagnosticCodesCompatible,
+  diagnosticTextCompatible,
+  exitCodeCompatible,
   comparedAt: new Date().toISOString(),
   ts6,
   ts7
@@ -50,7 +56,10 @@ await writeFile(
 
 console.log(`TypeScript 6 diagnostic codes: ${ts6.codes.join(", ")}`);
 console.log(`TypeScript 7 diagnostic codes: ${ts7.codes.join(", ")}`);
-console.log(`Diagnostic compatibility: ${compatible ? "PASS" : "FAIL"}`);
+console.log(`Diagnostic code compatibility: ${diagnosticCodesCompatible ? "PASS" : "FAIL"}`);
+console.log(`Diagnostic text compatibility: ${diagnosticTextCompatible ? "PASS" : "FAIL"}`);
+console.log(`Exit codes: TypeScript 6=${ts6.exitCode}, TypeScript 7=${ts7.exitCode}`);
+console.log(`Exit-code compatibility: ${exitCodeCompatible ? "PASS" : "OBSERVED DIFFERENCE"}`);
 
 if (!compatible) {
   process.exitCode = 1;
