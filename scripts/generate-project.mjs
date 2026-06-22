@@ -72,16 +72,20 @@ async function generateProjectReferences() {
   const baseDir = path.join(root, "test-cases", "project-references");
   await resetDirectory(baseDir);
 
+  const aggregatorIndex = projectPackageCount - 1;
+  const leafIndices = Array.from({ length: aggregatorIndex }, (_, index) => index);
   const rootReferences = [];
+
   for (let packageIndex = 0; packageIndex < projectPackageCount; packageIndex += 1) {
     const packageSuffix = String(packageIndex).padStart(2, "0");
     const packageDir = path.join(baseDir, `pkg-${packageSuffix}`);
     const sourceDir = path.join(packageDir, "src");
+    const isAggregator = packageIndex === aggregatorIndex;
     await mkdir(sourceDir, { recursive: true });
 
-    const references = packageIndex === 0
-      ? []
-      : [{ path: `../pkg-${String(packageIndex - 1).padStart(2, "0")}` }];
+    const references = isAggregator
+      ? leafIndices.map((leafIndex) => ({ path: `../pkg-${String(leafIndex).padStart(2, "0")}` }))
+      : [];
     const packageConfig = {
       compilerOptions: {
         composite: true,
@@ -112,11 +116,17 @@ async function generateProjectReferences() {
       exports.push(`export { ${valueName} } from \"./module-${fileSuffix}.js\";`);
     }
 
-    const previousTypeImport = packageIndex === 0
-      ? ""
-      : `import type { PackageSummary as PreviousPackageSummary } from \"../../pkg-${String(packageIndex - 1).padStart(2, "0")}/src/index.js\";\n`;
-    const previousField = packageIndex === 0 ? "" : "  previous?: PreviousPackageSummary;\n";
-    const indexSource = `${previousTypeImport}${exports.join("\n")}\n\nexport interface PackageSummary {\n  packageId: \"pkg-${packageSuffix}\";\n${previousField}  moduleCount: ${projectFilesPerPackage};\n}\n\nexport const packageSummary: PackageSummary = { packageId: \"pkg-${packageSuffix}\", moduleCount: ${projectFilesPerPackage} };\n`;
+    const dependencyImports = isAggregator
+      ? leafIndices.map((leafIndex) => {
+        const leafSuffix = String(leafIndex).padStart(2, "0");
+        return `import type { PackageSummary as PackageSummary${leafSuffix} } from \"../../pkg-${leafSuffix}/src/index.js\";`;
+      }).join("\n") + "\n"
+      : "";
+    const dependencyTypeNames = leafIndices.map((leafIndex) => `PackageSummary${String(leafIndex).padStart(2, "0")}`);
+    const dependencyField = isAggregator
+      ? `  dependencies?: readonly [${dependencyTypeNames.join(", ")}];\n`
+      : "";
+    const indexSource = `${dependencyImports}${exports.join("\n")}\n\nexport interface PackageSummary {\n  packageId: \"pkg-${packageSuffix}\";\n${dependencyField}  moduleCount: ${projectFilesPerPackage};\n}\n\nexport const packageSummary: PackageSummary = { packageId: \"pkg-${packageSuffix}\", moduleCount: ${projectFilesPerPackage} };\n`;
     await writeFile(path.join(sourceDir, "index.ts"), indexSource, "utf8");
     rootReferences.push({ path: `./pkg-${packageSuffix}` });
   }
@@ -128,6 +138,9 @@ async function generateProjectReferences() {
   );
   return {
     packageCount: projectPackageCount,
+    leafPackageCount: leafIndices.length,
+    aggregatorPackageCount: 1,
+    topology: "parallel-leaves-with-aggregator",
     filesPerPackage: projectFilesPerPackage,
     sourceFileCount: projectPackageCount * (projectFilesPerPackage + 1)
   };
