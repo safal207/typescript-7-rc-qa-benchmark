@@ -9,7 +9,8 @@ Independent QA research comparing **TypeScript 6.0** and **TypeScript 7.0 RC** a
 The 2026-06-22 baseline generated 1,500 TypeScript modules and measured every scenario 10 times on GitHub-hosted Ubuntu, Windows, and macOS runners.
 
 - TypeScript 7.0.1 RC default was **5.58x–6.16x faster** than TypeScript 6.0.3 by median wall-clock duration.
-- The tested diagnostic codes and text matched on all three operating systems.
+- The tested diagnostic codes and normalized diagnostic content matched on all three operating systems.
+- On Windows, TS6 emitted CRLF diagnostic line endings while TS7 RC emitted LF.
 - A known CLI exit-status difference reproduced consistently and is tracked in [issue #2](../../issues/2).
 
 Read the complete methodology, tables, limitations, and artifact digests in the [cross-platform benchmark report](docs/results/2026-06-22-full-benchmark.md).
