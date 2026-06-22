@@ -35,6 +35,10 @@ on:
         required: true
         default: "2000"
 
+concurrency:
+  group: typescript-7-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
