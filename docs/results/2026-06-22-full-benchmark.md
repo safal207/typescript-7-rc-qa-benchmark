@@ -10,7 +10,7 @@
 
 TypeScript 7.0 RC completed the same valid 1,500-module generated workload successfully on Ubuntu, Windows, and macOS. Its default type-checking process was between **5.58x and 6.16x faster** than TypeScript 6.0.3 by median wall-clock duration on the tested GitHub-hosted runners.
 
-The intentionally invalid fixture produced identical diagnostic codes and text in both compilers on all three operating systems. A CLI exit-status difference was consistently observed: TypeScript 6 returned `2`, while TypeScript 7 RC returned `1` for the same `--noEmit` diagnostic run. This matches previously reported upstream behavior and is tracked locally in #2 rather than being filed as a duplicate.
+The intentionally invalid fixture produced identical diagnostic codes and identical diagnostic content after line-ending normalization on all three operating systems. On Windows, TypeScript 6 used CRLF line endings while TypeScript 7 RC used LF. A separate CLI exit-status difference was consistently observed: TypeScript 6 returned `2`, while TypeScript 7 RC returned `1` for the same `--noEmit` diagnostic run. This matches previously reported upstream behavior and is tracked locally in #2 rather than being filed as a duplicate.
 
 ## Method
 
@@ -21,6 +21,7 @@ The intentionally invalid fixture produced identical diagnostic codes and text i
 - Warm-filesystem wall-clock process duration.
 - Median, mean, minimum, maximum, and standard deviation preserved in workflow artifacts.
 - GitHub-hosted Ubuntu, Windows, and macOS runners.
+- CRLF and LF treated as equivalent when comparing diagnostic content; raw output preserved in JSON.
 
 ## Default compiler comparison
 
@@ -64,7 +65,7 @@ The intentionally invalid fixture produced identical diagnostic codes and text i
 
 ## Diagnostic compatibility
 
-The invalid fixture generated the same ordered diagnostic code set and the same diagnostic messages on every platform:
+The invalid fixture generated the same ordered diagnostic code set and the same diagnostic content after newline normalization on every platform:
 
 ```text
 TS2322: Type 'string' is not assignable to type 'number'.
@@ -73,9 +74,10 @@ TS2345: Argument of type 'number' is not assignable to parameter of type 'string
 ```
 
 | Observation | TypeScript 6.0.3 | TypeScript 7.0.1-rc |
-|---|---:|---:|
+|---|---|---|
 | Diagnostic codes | 2322, 2345, 2741 | 2322, 2345, 2741 |
-| Diagnostic text | Match | Match |
+| Diagnostic content | Match after newline normalization | Match after newline normalization |
+| Windows raw line endings | CRLF | LF |
 | Exit code with `--noEmit` | `2` | `1` |
 
 The exit-code difference reproduces on Ubuntu, Windows, and macOS. It overlaps with upstream issue `microsoft/typescript-go#1493` and related exit-status work in `microsoft/typescript-go#4115`.
@@ -86,7 +88,8 @@ The exit-code difference reproduces on Ubuntu, Windows, and macOS. It overlaps w
 2. Single-threaded TS7 remained 4.31x–4.83x faster than TS6, suggesting that the improvement is not explained by checker parallelism alone.
 3. Two or four checkers improved the generated workload compared with one checker, but four checkers did not materially beat the default on Windows or macOS.
 4. Diagnostic semantics matched for this limited fixture; this is evidence for the tested cases, not proof of full compiler equivalence.
-5. The exit-status difference may affect scripts that distinguish TypeScript exit statuses rather than treating every non-zero value identically.
+5. Windows raw diagnostic output uses different newline conventions between TS6 and TS7 RC, which may affect byte-level snapshots and strict log parsers.
+6. The exit-status difference may affect scripts that distinguish TypeScript exit statuses rather than treating every non-zero value identically.
 
 ## Limitations
 
