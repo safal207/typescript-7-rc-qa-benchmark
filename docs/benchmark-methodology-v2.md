@@ -24,7 +24,7 @@ The same source project is compiled with `declaration` and `emitDeclarationOnly`
 
 ### Project references
 
-A generated chain of composite projects is rebuilt from a clean state with `--force`. TypeScript 6 is the baseline. TypeScript 7 is measured with its default builder configuration and explicit `--builders 1`, `2`, and `4` values.
+A generated star-shaped composite graph contains independent leaf libraries and one aggregator project referencing every leaf. The graph is rebuilt from a clean state with `--force`, giving parallel builders genuine independent work. TypeScript 6 is the baseline. TypeScript 7 is measured with its default builder configuration and explicit `--builders 1`, `2`, and `4` values.
 
 ## Measurement protocol
 
