@@ -1,0 +1,8 @@
+node_modules/
+dist/
+results/*.json
+results/*.md
+test-cases/generated/src/
+test-cases/generated/.metadata.json
+.DS_Store
+*.log

@@ -1,0 +1,23 @@
+{
+  "name": "typescript-7-rc-qa-benchmark",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Independent QA benchmark comparing TypeScript 6.0 and TypeScript 7.0 RC.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "versions": "node scripts/versions.mjs",
+    "generate": "node scripts/generate-project.mjs",
+    "typecheck:ts6": "tsc6 -p tsconfig.json --noEmit --pretty false",
+    "typecheck:ts7": "tsc -p tsconfig.json --noEmit --pretty false",
+    "compare:diagnostics": "node scripts/compare-diagnostics.mjs",
+    "benchmark": "node scripts/benchmark.mjs",
+    "qa": "npm run generate && npm run versions && npm run typecheck:ts6 && npm run typecheck:ts7 && npm run compare:diagnostics && npm run benchmark"
+  },
+  "devDependencies": {
+    "typescript": "npm:@typescript/typescript6@^6.0.0",
+    "typescript-7": "npm:typescript@rc"
+  }
+}

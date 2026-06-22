@@ -2,13 +2,13 @@
 
 Independent QA research comparing **TypeScript 6.0** and **TypeScript 7.0 RC** across compatibility, diagnostics, performance, parallelization, and CI environments.
 
-> Status: test harness is being built. No benchmark results have been published yet.
+> Status: baseline QA harness is ready. Benchmark results are generated locally and in GitHub Actions.
 
 ## Research questions
 
 1. Does TypeScript 7.0 RC produce compatible type-checking results for the same source code?
 2. How much faster is the native Go compiler on a repeatable generated workload?
-3. How do checker counts affect execution time and memory usage?
+3. How do checker counts affect execution time?
 4. Are results consistent across Linux, Windows, and macOS?
 5. Can we isolate reproducible regressions suitable for the TypeScript issue tracker?
 
