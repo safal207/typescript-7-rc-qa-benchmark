@@ -2,7 +2,7 @@
 
 Independent QA research comparing **TypeScript 6.0** and **TypeScript 7.0 RC** across compatibility, diagnostics, performance, parallelization, emit correctness, and CI environments.
 
-> Status: benchmark V2 is complete and published. Upstream sharing is intentionally paused until review.
+> Status: benchmark V2 is complete and validated. Upstream sharing is intentionally paused until review.
 
 ## Benchmark V2 result
 
