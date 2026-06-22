@@ -63,15 +63,16 @@ jobs:
       - name: Run QA harness
         run: npm run qa
         env:
-          GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '300' }}
-          TYPE_HEAVY_FILES: ${{ github.event_name == 'workflow_dispatch' && inputs.type_heavy_files || '24' }}
-          PROJECT_PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.project_packages || '4' }}
-          PROJECT_FILES_PER_PACKAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.project_files_per_package || '12' }}
-          BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
-          BENCHMARK_WARMUPS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_warmups || '1' }}
-          BOOTSTRAP_RESAMPLES: ${{ github.event_name == 'workflow_dispatch' && inputs.bootstrap_resamples || '400' }}
+          GENERATED_MODULES: "1500"
+          TYPE_HEAVY_FILES: "120"
+          PROJECT_PACKAGES: "12"
+          PROJECT_FILES_PER_PACKAGE: "60"
+          BENCHMARK_RUNS: "15"
+          BENCHMARK_WARMUPS: "2"
+          BOOTSTRAP_RESAMPLES: "2000"
           BENCHMARK_SEED: "20260622"
           VERIFY_OUTPUT_STRICT: "true"
+          EVIDENCE_PROFILE: "full-v2"
 
       - name: Upload reports
         if: always()
