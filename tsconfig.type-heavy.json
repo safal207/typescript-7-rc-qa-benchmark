@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./test-cases/type-heavy/src",
+    "noEmit": true
+  },
+  "include": ["test-cases/type-heavy/src/**/*.ts"]
+}
