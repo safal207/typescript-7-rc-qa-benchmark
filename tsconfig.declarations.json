@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "rootDir": "./test-cases/generated/src",
+    "outDir": "./results/benchmark-output/declarations",
+    "newLine": "lf"
+  },
+  "include": ["test-cases/generated/src/**/*.ts"]
+}

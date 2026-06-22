@@ -7,13 +7,37 @@ on:
   workflow_dispatch:
     inputs:
       generated_modules:
-        description: Number of generated TypeScript modules
+        description: Number of many-file workload modules
         required: true
         default: "1500"
-      benchmark_runs:
-        description: Number of measured runs per scenario
+      type_heavy_files:
+        description: Number of type-heavy source files
         required: true
-        default: "10"
+        default: "120"
+      project_packages:
+        description: Number of referenced projects
+        required: true
+        default: "12"
+      project_files_per_package:
+        description: Source files per referenced project
+        required: true
+        default: "60"
+      benchmark_runs:
+        description: Measured rounds per scenario
+        required: true
+        default: "15"
+      benchmark_warmups:
+        description: Warm-up rounds per scenario
+        required: true
+        default: "2"
+      bootstrap_resamples:
+        description: Bootstrap resamples for median confidence intervals
+        required: true
+        default: "2000"
+
+concurrency:
+  group: typescript-7-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -22,6 +46,7 @@ jobs:
   compatibility-and-benchmark:
     name: ${{ matrix.os }} / Node 22
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -42,8 +67,16 @@ jobs:
       - name: Run QA harness
         run: npm run qa
         env:
-          GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '500' }}
+          GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '300' }}
+          TYPE_HEAVY_FILES: ${{ github.event_name == 'workflow_dispatch' && inputs.type_heavy_files || '24' }}
+          PROJECT_PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.project_packages || '4' }}
+          PROJECT_FILES_PER_PACKAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.project_files_per_package || '12' }}
           BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
+          BENCHMARK_WARMUPS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_warmups || '1' }}
+          BOOTSTRAP_RESAMPLES: ${{ github.event_name == 'workflow_dispatch' && inputs.bootstrap_resamples || '400' }}
+          BENCHMARK_SEED: "20260622"
+          VERIFY_OUTPUT_STRICT: "true"
+          EVIDENCE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && 'full-v2' || 'smoke-v2' }}
 
       - name: Upload reports
         if: always()
@@ -52,3 +85,4 @@ jobs:
           name: results-${{ matrix.os }}
           path: results/
           if-no-files-found: warn
+          retention-days: 30

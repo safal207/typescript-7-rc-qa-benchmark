@@ -1,27 +1,38 @@
 # TypeScript 7.0 RC QA Benchmark
 
-Independent QA research comparing **TypeScript 6.0** and **TypeScript 7.0 RC** across compatibility, diagnostics, performance, parallelization, and CI environments.
+Independent QA research comparing **TypeScript 6.0** and **TypeScript 7.0 RC** across compatibility, diagnostics, performance, parallelization, emit correctness, and CI environments.
 
-> Status: the first cross-platform baseline has been completed and published.
+> Status: benchmark V2 is complete and validated. Upstream sharing is intentionally paused until review.
 
-## Latest published result
+## Benchmark V2 result
 
-The 2026-06-22 baseline generated 1,500 TypeScript modules and measured every scenario 10 times on GitHub-hosted Ubuntu, Windows, and macOS runners.
+The 2026-06-22 evidence run tested TypeScript 6.0.3 and TypeScript 7.0.1 RC on GitHub-hosted Ubuntu, Windows, and macOS runners using five workloads, 2 warm-up rounds, and 15 measured rounds per scenario.
 
-- TypeScript 7.0.1 RC default was **5.58x–6.16x faster** than TypeScript 6.0.3 by median wall-clock duration.
-- The tested diagnostic codes and normalized diagnostic content matched on all three operating systems.
-- On Windows, TS6 emitted CRLF diagnostic line endings while TS7 RC emitted LF.
-- A known CLI exit-status difference reproduced consistently and is tracked in [issue #2](../../issues/2).
+- Many-small-files checking: **5.57×–6.31× faster** with TS7 default.
+- Type-heavy checking: **4.98×–6.05× faster**.
+- JavaScript emit: **4.59×–6.40× faster**.
+- Declaration-only emit: **4.58×–6.51× faster**.
+- Clean project-reference builds: **4.66×–6.20× faster**.
+- Normalized output hashes matched for 1,501 JavaScript files, 1,501 declaration files, and 1,464 project-reference files on every operating system.
+- The known CLI exit-status difference reproduced consistently and remains tracked in [issue #2](../../issues/2).
 
-Read the complete methodology, tables, limitations, and artifact digests in the [cross-platform benchmark report](docs/results/2026-06-22-full-benchmark.md).
+Read the full [Benchmark V2 evidence report](docs/results/2026-06-22-benchmark-v2-full.md) and the [V2 methodology](docs/benchmark-methodology-v2.md).
 
-## Research questions
+The earlier, simpler baseline remains available in the [first cross-platform report](docs/results/2026-06-22-full-benchmark.md).
 
-1. Does TypeScript 7.0 RC produce compatible type-checking results for the same source code?
-2. How much faster is the native Go compiler on a repeatable generated workload?
-3. How do checker counts affect execution time?
-4. Are results consistent across Linux, Windows, and macOS?
-5. Can we isolate reproducible regressions suitable for the TypeScript issue tracker?
+## Evidence model
+
+V2 uses five independent suites:
+
+1. many-small-files type checking;
+2. mapped, conditional, recursive, and template-literal type checking;
+3. JavaScript emit;
+4. declaration-only emit;
+5. clean project-reference builds over 11 independent leaf projects and one aggregator.
+
+The runner interleaves scenarios in a deterministic randomized order. It reports median, P90, P95, standard deviation, coefficient of variation, median absolute deviation, IQR outliers, and a non-parametric 95% bootstrap confidence interval for every median. Outliers are reported but never removed.
+
+Correctness is checked separately by comparing normalized SHA-256 output trees for JavaScript, declarations, and project-reference builds. CRLF is normalized to LF, while raw files and machine-readable reports remain available as workflow artifacts.
 
 ## Quick start
 
@@ -30,7 +41,7 @@ npm install
 npm run qa
 ```
 
-The command generates a deterministic TypeScript workload, checks valid fixtures with both compilers, compares diagnostics for intentionally invalid fixtures, and writes benchmark reports to `results/`.
+The command generates all workloads, validates both compilers, compares diagnostics, collects extended diagnostics, runs the statistical benchmark, verifies emitted output, and writes reports to `results/`.
 
 ## Useful commands
 
@@ -39,35 +50,40 @@ npm run versions
 npm run generate
 npm run typecheck:ts6
 npm run typecheck:ts7
+npm run typecheck:heavy:ts6
+npm run typecheck:heavy:ts7
 npm run compare:diagnostics
+npm run collect:extended-diagnostics
 npm run benchmark
+npm run verify:outputs
 ```
 
-Set the number of benchmark runs or generated modules with environment variables:
+A full local evidence run:
 
 ```bash
-BENCHMARK_RUNS=10 GENERATED_MODULES=1500 npm run qa
-```
-
-PowerShell:
-
-```powershell
-$env:BENCHMARK_RUNS=10
-$env:GENERATED_MODULES=1500
+GENERATED_MODULES=1500 \
+TYPE_HEAVY_FILES=120 \
+PROJECT_PACKAGES=12 \
+PROJECT_FILES_PER_PACKAGE=60 \
+BENCHMARK_RUNS=15 \
+BENCHMARK_WARMUPS=2 \
+BOOTSTRAP_RESAMPLES=2000 \
 npm run qa
 ```
 
-GitHub Actions runs a smaller smoke benchmark on pushes and pull requests. A configurable full benchmark can be started manually through `workflow_dispatch`.
+GitHub Actions runs a smaller smoke profile for pull requests and exposes a configurable full evidence profile through `workflow_dispatch`. Superseded runs are cancelled automatically.
 
 ## Methodology principles
 
-- Same source tree and explicit compiler configuration for both versions.
-- Deterministic generated workload.
-- Warm-up runs excluded from reported measurements.
-- Raw machine-readable results preserved as JSON.
-- Median reported alongside mean, minimum, maximum, and standard deviation.
-- Compatibility findings separated from intentional TypeScript 6.0/7.0 behavior changes.
-- Suspected regressions require a minimal reproduction before being reported upstream.
+- Identical source trees and explicit compiler configurations.
+- Multiple workloads to avoid overfitting conclusions to one synthetic shape.
+- Fresh compiler process for every measurement.
+- Setup and output cleanup excluded from the measured interval.
+- Deterministic randomized interleaving to reduce ordering and thermal bias.
+- Raw samples preserved; no outlier deletion.
+- Output correctness evaluated independently from speed.
+- Compiler-reported memory treated as supplementary rather than OS-equivalent measurement.
+- Suspected regressions checked against documented changes and existing upstream issues.
 
 ## Official references
 

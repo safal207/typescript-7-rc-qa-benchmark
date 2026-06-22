@@ -1,8 +1,9 @@
 node_modules/
 dist/
-results/*.json
-results/*.md
+results/
+test-cases/.generated-metadata.json
 test-cases/generated/src/
-test-cases/generated/.metadata.json
+test-cases/type-heavy/src/
+test-cases/project-references/
 .DS_Store
 *.log
