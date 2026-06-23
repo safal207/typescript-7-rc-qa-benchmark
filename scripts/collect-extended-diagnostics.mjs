@@ -47,7 +47,8 @@ async function cleanProjectOutputs() {
 const checks = [];
 for (const workload of [
   { id: "many-files", label: "Many small files", config: "tsconfig.json" },
-  { id: "type-heavy", label: "Type-heavy types", config: "tsconfig.type-heavy.json" }
+  { id: "type-heavy", label: "Type-heavy types", config: "tsconfig.type-heavy.json" },
+  { id: "real-world-type-fest", label: "Real-world dependency: type-fest 5.7.0", config: "tsconfig.real-world-type-fest.json" }
 ]) {
   for (const compiler of [
     { id: "ts6", binary: "tsc6", label: "TypeScript 6" },
@@ -86,6 +87,7 @@ const report = {
 const preferredMetrics = [
   "Files",
   "Lines of Library",
+  "Lines of Definitions",
   "Lines of TypeScript",
   "Identifiers",
   "Symbols",
@@ -100,7 +102,7 @@ const preferredMetrics = [
 ];
 
 const sections = [];
-for (const workload of ["many-files", "type-heavy", "project-references"]) {
+for (const workload of ["many-files", "type-heavy", "real-world-type-fest", "project-references"]) {
   const entries = checks.filter((check) => check.workload === workload);
   if (entries.length === 0) continue;
   const metricNames = preferredMetrics.filter((name) => entries.some((entry) => entry.metrics[name] !== undefined));
