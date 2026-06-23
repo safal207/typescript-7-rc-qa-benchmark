@@ -21,6 +21,7 @@
     "compare:diagnostics": "node scripts/compare-diagnostics.mjs",
     "collect:extended-diagnostics": "node scripts/collect-extended-diagnostics.mjs",
     "benchmark": "node scripts/benchmark.mjs",
+    "benchmark:checkers": "node scripts/benchmark-checker-scaling.mjs",
     "benchmark:real-world": "node scripts/benchmark-real-world-type-fest.mjs",
     "verify:outputs": "node scripts/verify-outputs.mjs",
     "qa": "npm run generate && npm run versions && npm run typecheck:ts6 && npm run typecheck:ts7 && npm run typecheck:heavy:ts6 && npm run typecheck:heavy:ts7 && npm run typecheck:real-world:ts6 && npm run typecheck:real-world:ts7 && npm run compare:diagnostics && npm run collect:extended-diagnostics && npm run benchmark && npm run benchmark:real-world && npm run verify:outputs"
