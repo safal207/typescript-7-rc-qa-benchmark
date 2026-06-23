@@ -14,6 +14,10 @@ on:
         description: Number of type-heavy source files
         required: true
         default: "120"
+      real_world_files:
+        description: Number of generated type-fest consumer files
+        required: true
+        default: "64"
       project_packages:
         description: Number of referenced projects
         required: true
@@ -46,7 +50,7 @@ jobs:
   compatibility-and-benchmark:
     name: ${{ matrix.os }} / Node 22
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 45
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -69,6 +73,7 @@ jobs:
         env:
           GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '300' }}
           TYPE_HEAVY_FILES: ${{ github.event_name == 'workflow_dispatch' && inputs.type_heavy_files || '24' }}
+          REAL_WORLD_FILES: ${{ github.event_name == 'workflow_dispatch' && inputs.real_world_files || '24' }}
           PROJECT_PACKAGES: ${{ github.event_name == 'workflow_dispatch' && inputs.project_packages || '4' }}
           PROJECT_FILES_PER_PACKAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.project_files_per_package || '12' }}
           BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
@@ -76,7 +81,7 @@ jobs:
           BOOTSTRAP_RESAMPLES: ${{ github.event_name == 'workflow_dispatch' && inputs.bootstrap_resamples || '400' }}
           BENCHMARK_SEED: "20260622"
           VERIFY_OUTPUT_STRICT: "true"
-          EVIDENCE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && 'full-v2' || 'smoke-v2' }}
+          EVIDENCE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && 'full-v2.1' || 'smoke-v2.1' }}
 
       - name: Upload reports
         if: always()
