@@ -5,5 +5,7 @@ test-cases/.generated-metadata.json
 test-cases/generated/src/
 test-cases/type-heavy/src/
 test-cases/project-references/
+test-cases/real-world-type-fest/src/
+test-cases/real-world-type-fest/.metadata.json
 .DS_Store
 *.log
