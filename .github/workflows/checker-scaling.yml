@@ -1,0 +1,86 @@
+name: TypeScript 7 Checker Scaling
+
+on:
+  pull_request:
+    paths:
+      - scripts/benchmark-checker-scaling.mjs
+      - package.json
+      - .github/workflows/checker-scaling.yml
+  workflow_dispatch:
+    inputs:
+      checker_counts:
+        description: Comma-separated TypeScript 7 checker counts
+        required: true
+        default: "1,2,4,8,16"
+      generated_modules:
+        description: Number of many-file workload modules
+        required: true
+        default: "1500"
+      type_heavy_files:
+        description: Number of type-heavy source files
+        required: true
+        default: "120"
+      benchmark_runs:
+        description: Measured rounds per scenario
+        required: true
+        default: "15"
+      benchmark_warmups:
+        description: Warm-up rounds per scenario
+        required: true
+        default: "2"
+
+concurrency:
+  group: typescript-7-checker-scaling-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checker-scaling:
+    name: ${{ matrix.os }} / Node 22
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate synthetic workloads
+        run: npm run generate:synthetic
+        env:
+          GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '300' }}
+          TYPE_HEAVY_FILES: ${{ github.event_name == 'workflow_dispatch' && inputs.type_heavy_files || '24' }}
+          PROJECT_PACKAGES: "4"
+          PROJECT_FILES_PER_PACKAGE: "12"
+
+      - name: Run checker scaling benchmark
+        run: npm run benchmark:checkers
+        env:
+          CHECKER_COUNTS: ${{ github.event_name == 'workflow_dispatch' && inputs.checker_counts || '1,2,4,8,16' }}
+          CHECKER_BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
+          CHECKER_BENCHMARK_WARMUPS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_warmups || '1' }}
+          CHECKER_BENCHMARK_SEED: "20260624"
+
+      - name: Upload checker scaling reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checker-scaling-${{ matrix.os }}
+          path: |
+            results/checker-scaling.latest.json
+            results/checker-scaling.latest.md
+          if-no-files-found: warn
+          retention-days: 30
