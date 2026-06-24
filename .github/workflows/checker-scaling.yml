@@ -61,8 +61,8 @@ jobs:
       - name: Generate synthetic workloads
         run: npm run generate:synthetic
         env:
-          GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '300' }}
-          TYPE_HEAVY_FILES: ${{ github.event_name == 'workflow_dispatch' && inputs.type_heavy_files || '24' }}
+          GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '1500' }}
+          TYPE_HEAVY_FILES: ${{ github.event_name == 'workflow_dispatch' && inputs.type_heavy_files || '120' }}
           PROJECT_PACKAGES: "4"
           PROJECT_FILES_PER_PACKAGE: "12"
 
@@ -70,8 +70,8 @@ jobs:
         run: npm run benchmark:checkers
         env:
           CHECKER_COUNTS: ${{ github.event_name == 'workflow_dispatch' && inputs.checker_counts || '1,2,4,8,16' }}
-          CHECKER_BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
-          CHECKER_BENCHMARK_WARMUPS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_warmups || '1' }}
+          CHECKER_BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '15' }}
+          CHECKER_BENCHMARK_WARMUPS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_warmups || '2' }}
           CHECKER_BENCHMARK_SEED: "20260624"
 
       - name: Upload checker scaling reports
