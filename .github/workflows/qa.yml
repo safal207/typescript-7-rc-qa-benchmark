@@ -94,3 +94,52 @@ jobs:
           path: results/
           if-no-files-found: warn
           retention-days: 30
+
+  stable-full-evidence:
+    if: github.event_name == 'pull_request' && github.head_ref == 'agent/typescript-7-stable-validation'
+    name: Full evidence / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pinned dependencies
+        run: npm install
+
+      - name: Verify compiler selection
+        run: npm run verify:compiler-selection
+
+      - name: Run full stable evidence profile
+        run: npm run qa
+        env:
+          GENERATED_MODULES: "1500"
+          TYPE_HEAVY_FILES: "120"
+          REAL_WORLD_FILES: "64"
+          PROJECT_PACKAGES: "12"
+          PROJECT_FILES_PER_PACKAGE: "60"
+          BENCHMARK_RUNS: "15"
+          BENCHMARK_WARMUPS: "2"
+          BOOTSTRAP_RESAMPLES: "2000"
+          BENCHMARK_SEED: "20260710"
+          VERIFY_OUTPUT_STRICT: "true"
+          EVIDENCE_PROFILE: "stable-full-v1"
+
+      - name: Upload full stable evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stable-full-results-${{ matrix.os }}
+          path: results/
+          if-no-files-found: warn
+          retention-days: 90
