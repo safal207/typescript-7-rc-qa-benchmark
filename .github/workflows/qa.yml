@@ -1,4 +1,4 @@
-name: TypeScript 7 RC QA
+name: TypeScript 7 Stable QA
 
 on:
   push:
@@ -40,7 +40,7 @@ on:
         default: "2000"
 
 concurrency:
-  group: typescript-7-qa-${{ github.event.pull_request.number || github.ref }}
+  group: typescript-7-stable-qa-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -65,10 +65,13 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
+      - name: Install pinned dependencies
         run: npm install
 
-      - name: Run QA harness
+      - name: Verify compiler selection
+        run: npm run verify:compiler-selection
+
+      - name: Run stable QA harness
         run: npm run qa
         env:
           GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '300' }}
@@ -79,15 +82,15 @@ jobs:
           BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
           BENCHMARK_WARMUPS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_warmups || '1' }}
           BOOTSTRAP_RESAMPLES: ${{ github.event_name == 'workflow_dispatch' && inputs.bootstrap_resamples || '400' }}
-          BENCHMARK_SEED: "20260622"
+          BENCHMARK_SEED: "20260710"
           VERIFY_OUTPUT_STRICT: "true"
-          EVIDENCE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && 'full-v2.1' || 'smoke-v2.1' }}
+          EVIDENCE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && 'stable-full-v1' || 'stable-smoke-v1' }}
 
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: results-${{ matrix.os }}
+          name: stable-results-${{ matrix.os }}
           path: results/
           if-no-files-found: warn
           retention-days: 30
