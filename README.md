@@ -1,12 +1,24 @@
-# TypeScript 7.0 RC QA Benchmark
+# TypeScript 7 QA Benchmark
 
-Independent QA research comparing **TypeScript 6.0** and **TypeScript 7.0 RC** across compatibility, diagnostics, performance, parallelization, emit correctness, real-world declaration dependencies, and CI environments.
+Independent QA research comparing **classic TypeScript 6.0** with the native Go-based **TypeScript 7.0** compiler across compatibility, diagnostics, performance, parallelization, emit correctness, real-world declaration dependencies, and CI environments.
 
-> Status: benchmark V2 is complete and validated. Benchmark V2.1 adds a pinned `type-fest@5.7.0` consumer suite and is being validated separately before its results are published.
+> Current phase: TypeScript 7.0 stable validation. Historical RC reports remain preserved as the evidence baseline and are not relabelled as stable results.
 
-## Benchmark V2 result
+## Stable validation
 
-The 2026-06-22 evidence run tested TypeScript 6.0.3 and TypeScript 7.0.1 RC on GitHub-hosted Ubuntu, Windows, and macOS runners using five generated workloads, 2 warm-up rounds, and 15 measured rounds per scenario.
+The stable branch pins:
+
+- `typescript@7.0.2`;
+- `@typescript/typescript6@6.0.2`, exposing the classic TypeScript 6.0.3 compiler as `tsc6`;
+- `type-fest@5.7.0`.
+
+A compiler-selection preflight now guards against npm bin-link collisions. When the stable and classic packages are installed together, the root `.bin/tsc` command can otherwise resolve to the classic compiler. The post-install guard recreates the stable `tsc` shim and fails unless `tsc` selects TypeScript 7 while `tsc6` selects the classic TypeScript 6 baseline.
+
+Read the [stable validation contract](docs/stable-validation-2026-07.md).
+
+## Historical Benchmark V2 result
+
+The 2026-06-22 RC evidence run tested TypeScript 6.0.3 and TypeScript 7.0.1 RC on GitHub-hosted Ubuntu, Windows, and macOS runners using five generated workloads, 2 warm-up rounds, and 15 measured rounds per scenario.
 
 - Many-small-files checking: **5.57×–6.31× faster** with TS7 default.
 - Type-heavy checking: **4.98×–6.05× faster**.
@@ -28,7 +40,7 @@ This strengthens the evidence by exercising maintained third-party declarations 
 
 ## Evidence model
 
-The harness now contains six independent suites:
+The harness contains six independent suites:
 
 1. many-small-files type checking;
 2. mapped, conditional, recursive, and template-literal type checking;
@@ -48,11 +60,12 @@ npm install
 npm run qa
 ```
 
-The command generates all workloads, verifies the pinned real-world dependency, validates both compilers, compares diagnostics, collects extended diagnostics, runs the statistical benchmarks, verifies emitted output, and writes reports to `results/`.
+Installation pins both compiler generations and verifies that their command shims select different intended implementations. The QA command then generates all workloads, validates both compilers, compares diagnostics, collects extended diagnostics, runs the statistical benchmarks, verifies emitted output, and writes reports to `results/`.
 
 ## Useful commands
 
 ```bash
+npm run verify:compiler-selection
 npm run versions
 npm run generate
 npm run generate:real-world
@@ -65,11 +78,12 @@ npm run typecheck:real-world:ts7
 npm run compare:diagnostics
 npm run collect:extended-diagnostics
 npm run benchmark
+npm run benchmark:checkers
 npm run benchmark:real-world
 npm run verify:outputs
 ```
 
-A full local V2.1 evidence run:
+A full stable evidence run:
 
 ```bash
 GENERATED_MODULES=1500 \
@@ -83,13 +97,14 @@ BOOTSTRAP_RESAMPLES=2000 \
 npm run qa
 ```
 
-GitHub Actions runs a smaller smoke profile for pull requests and exposes a configurable full evidence profile through `workflow_dispatch`. Superseded runs are cancelled automatically.
+GitHub Actions runs a smaller stable smoke profile for pull requests and exposes a configurable full evidence profile through `workflow_dispatch`. Superseded runs are cancelled automatically.
 
 ## Methodology principles
 
 - Identical source trees and explicit compiler configurations.
+- Exact compiler and dependency version pinning.
+- Verified compiler-command selection before collecting evidence.
 - Multiple workloads to avoid overfitting conclusions to one generated shape.
-- Exact dependency version pinning for the real-world declaration suite.
 - Fresh compiler process for every measurement.
 - Setup and output cleanup excluded from the measured interval.
 - Deterministic randomized interleaving to reduce ordering and thermal bias.
@@ -97,6 +112,7 @@ GitHub Actions runs a smaller smoke profile for pull requests and exposes a conf
 - Output correctness evaluated independently from speed.
 - Compiler-reported memory treated as supplementary rather than OS-equivalent measurement.
 - Suspected regressions checked against documented changes and existing upstream issues.
+- Historical RC evidence preserved separately from stable-release evidence.
 
 ## Official references
 
