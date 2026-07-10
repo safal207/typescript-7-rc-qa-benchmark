@@ -5,6 +5,7 @@ on:
     paths:
       - scripts/benchmark-checker-scaling.mjs
       - package.json
+      - package-lock.json
       - .github/workflows/checker-scaling.yml
   workflow_dispatch:
     inputs:
@@ -54,9 +55,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Verify compiler selection
+        run: npm run verify:compiler-selection
 
       - name: Generate synthetic workloads
         run: npm run generate:synthetic
