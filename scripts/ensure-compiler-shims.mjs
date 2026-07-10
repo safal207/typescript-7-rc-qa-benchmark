@@ -1,10 +1,13 @@
-import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const binDir = path.join(root, "node_modules", ".bin");
+const stablePackageFile = path.join(root, "node_modules", "typescript", "package.json");
+const classicPackageFile = path.join(root, "node_modules", "@typescript", "old", "package.json");
+const isPostinstall = process.env.npm_lifecycle_event === "postinstall";
 
 async function readJson(file) {
   return JSON.parse(await readFile(file, "utf8"));
@@ -16,11 +19,33 @@ async function replaceShim(file, content, mode) {
   if (mode !== undefined) await chmod(file, mode);
 }
 
+async function toolchainIsInstalled() {
+  try {
+    await Promise.all([access(stablePackageFile), access(classicPackageFile)]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+if (!(await toolchainIsInstalled())) {
+  const message =
+    "TypeScript benchmark toolchain is not installed. Install devDependencies before running compiler verification or QA.";
+
+  if (isPostinstall) {
+    console.log(`${message} Skipping postinstall shim repair for this production-only install.`);
+    process.exit(0);
+  }
+
+  throw new Error(message);
+}
+
 await mkdir(binDir, { recursive: true });
 
 // @typescript/typescript6 depends on the classic compiler as @typescript/old.
 // npm may allow that dependency's `tsc` bin to overwrite TypeScript 7's root
-// `tsc` shim. Recreate the stable shim deterministically on every install.
+// `tsc` shim. Recreate the stable shim deterministically whenever the complete
+// benchmark toolchain is installed.
 const unixShim = `#!/bin/sh
 basedir=$(dirname "$(echo "$0" | sed -e 's,\\\\,/,g')")
 exec node "$basedir/../typescript/bin/tsc" "$@"
@@ -32,8 +57,8 @@ await replaceShim(path.join(binDir, "tsc"), unixShim, 0o755);
 await replaceShim(path.join(binDir, "tsc.cmd"), cmdShim);
 await replaceShim(path.join(binDir, "tsc.ps1"), ps1Shim);
 
-const stablePackage = await readJson(path.join(root, "node_modules", "typescript", "package.json"));
-const classicPackage = await readJson(path.join(root, "node_modules", "@typescript", "old", "package.json"));
+const stablePackage = await readJson(stablePackageFile);
+const classicPackage = await readJson(classicPackageFile);
 
 function runVersion(name) {
   const executable = path.join(binDir, `${name}${process.platform === "win32" ? ".cmd" : ""}`);
