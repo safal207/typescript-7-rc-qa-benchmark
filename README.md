@@ -6,15 +6,34 @@ Independent QA research comparing **classic TypeScript 6.0** with the native Go-
 
 ## Stable validation
 
-The stable branch pins:
+The stable branch pins and locks:
 
 - `typescript@7.0.2`;
 - `@typescript/typescript6@6.0.2`, exposing the classic TypeScript 6.0.3 compiler as `tsc6`;
-- `type-fest@5.7.0`.
+- `@typescript/old` explicitly to `typescript@6.0.3`;
+- `type-fest@5.7.0`;
+- the complete npm dependency graph through `package-lock.json`.
 
-A compiler-selection preflight now guards against npm bin-link collisions. When the stable and classic packages are installed together, the root `.bin/tsc` command can otherwise resolve to the classic compiler. The post-install guard recreates the stable `tsc` shim and fails unless `tsc` selects TypeScript 7 while `tsc6` selects the classic TypeScript 6 baseline.
+Evidence workflows use `npm ci`. A compiler-selection preflight guards against npm bin-link collisions: when stable and classic packages are installed together, the root `.bin/tsc` command can otherwise resolve to the classic compiler. The guard recreates the stable `tsc` shim and fails unless `tsc` selects TypeScript 7 while `tsc6` selects the classic TypeScript 6 baseline.
 
-Read the [stable validation contract](docs/stable-validation-2026-07.md).
+Production-only installs are also supported: `npm ci --omit=dev` skips shim repair because the benchmark toolchain is absent, while an explicit QA verification still fails closed.
+
+Read the [stable validation contract](docs/stable-validation-2026-07.md), the [full stable evidence report](docs/results/2026-07-10-typescript-7-stable-full.md), and the [three-reviewer causal adjudication](docs/review-council-2026-07-10.md).
+
+## TypeScript 7.0.2 stable result
+
+The 2026-07-10 full evidence run used 2 warm-ups and 15 measured randomized rounds per scenario on GitHub-hosted Ubuntu, Windows, and macOS runners.
+
+- Many-small-files checking: **5.20×–6.14× faster**.
+- Type-heavy checking: **4.78×–5.87× faster**.
+- JavaScript emit: **4.60×–6.18× faster**.
+- Declaration-only emit: **4.51×–6.08× faster**.
+- Clean project-reference builds: **5.29×–6.06× faster**.
+- Pinned `type-fest@5.7.0` consumers: **4.95×–5.54× faster**.
+- Normalized output hashes matched for 1,501 JavaScript files, 1,501 declaration files, and 1,464 project-reference files on every operating system.
+- The known `--noEmit` CLI difference remained: TypeScript 6.0.3 returned `2`, TypeScript 7.0.2 returned `1` with matching diagnostic codes and normalized text.
+
+The defensible aggregate claim is **4.51×–6.18× faster for the documented workloads and protocol**, not a universal speed guarantee.
 
 ## Historical Benchmark V2 result
 
@@ -53,14 +72,16 @@ The runners interleave scenarios in a deterministic randomized order. They repor
 
 Correctness is checked separately by comparing normalized SHA-256 output trees for JavaScript, declarations, and project-reference builds. CRLF is normalized to LF, while raw files and machine-readable reports remain available as workflow artifacts.
 
+Checker scaling is evaluated by a separate cross-platform workflow. Its claims are not inferred from the main `qa` command; the stable three-OS evidence is Actions run `29121518759`.
+
 ## Quick start
 
 ```bash
-npm install
+npm ci
 npm run qa
 ```
 
-Installation pins both compiler generations and verifies that their command shims select different intended implementations. The QA command then generates all workloads, validates both compilers, compares diagnostics, collects extended diagnostics, runs the statistical benchmarks, verifies emitted output, and writes reports to `results/`.
+The locked installation repairs and verifies compiler command shims. The QA command then generates all workloads, validates both compilers, compares diagnostics, collects extended diagnostics, runs the statistical benchmarks, verifies emitted output, and writes reports to `results/`.
 
 ## Useful commands
 
@@ -102,8 +123,10 @@ GitHub Actions runs a smaller stable smoke profile for pull requests and exposes
 ## Methodology principles
 
 - Identical source trees and explicit compiler configurations.
-- Exact compiler and dependency version pinning.
+- Exact direct pins plus a committed transitive dependency lock.
+- `npm ci` for evidence workflows.
 - Verified compiler-command selection before collecting evidence.
+- Separate production-only installation and strict QA-verification contracts.
 - Multiple workloads to avoid overfitting conclusions to one generated shape.
 - Fresh compiler process for every measurement.
 - Setup and output cleanup excluded from the measured interval.
