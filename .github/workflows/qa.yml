@@ -64,9 +64,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install pinned dependencies
-        run: npm install
+      - name: Install locked dependencies
+        run: npm ci
 
       - name: Verify compiler selection
         run: npm run verify:compiler-selection
@@ -95,9 +96,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-  generate-lockfile:
-    if: github.event_name == 'pull_request' && github.head_ref == 'agent/typescript-7-stable-validation'
-    name: Generate reviewed lockfile
+  production-install-contract:
+    name: Production-only install contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -109,14 +109,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Generate package-lock without lifecycle scripts
-        run: npm install --package-lock-only --ignore-scripts
+      - name: Install without devDependencies
+        run: npm ci --omit=dev
 
-      - name: Upload package-lock
-        uses: actions/upload-artifact@v4
-        with:
-          name: reviewed-package-lock
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 7
+      - name: Verify QA guard still fails closed
+        shell: bash
+        run: |
+          set +e
+          npm run verify:compiler-selection
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "Compiler verification unexpectedly passed without the benchmark toolchain." >&2
+            exit 1
+          fi
+          echo "Production-only install succeeded; explicit QA verification failed closed as expected."
