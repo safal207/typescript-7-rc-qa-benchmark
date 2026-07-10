@@ -1,13 +1,15 @@
 {
   "name": "typescript-7-rc-qa-benchmark",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
-  "description": "Independent QA benchmark comparing TypeScript 6.0 and TypeScript 7.0 RC.",
+  "description": "Independent QA benchmark comparing classic TypeScript 6.0 with TypeScript 7.0 stable while preserving the RC evidence baseline.",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "postinstall": "node scripts/ensure-compiler-shims.mjs",
+    "verify:compiler-selection": "node scripts/ensure-compiler-shims.mjs",
     "versions": "node scripts/versions.mjs",
     "generate:synthetic": "node scripts/generate-project.mjs",
     "generate:real-world": "node scripts/generate-real-world-type-fest.mjs",
@@ -24,11 +26,11 @@
     "benchmark:checkers": "node scripts/benchmark-checker-scaling.mjs",
     "benchmark:real-world": "node scripts/benchmark-real-world-type-fest.mjs",
     "verify:outputs": "node scripts/verify-outputs.mjs",
-    "qa": "npm run generate && npm run versions && npm run typecheck:ts6 && npm run typecheck:ts7 && npm run typecheck:heavy:ts6 && npm run typecheck:heavy:ts7 && npm run typecheck:real-world:ts6 && npm run typecheck:real-world:ts7 && npm run compare:diagnostics && npm run collect:extended-diagnostics && npm run benchmark && npm run benchmark:real-world && npm run verify:outputs"
+    "qa": "npm run verify:compiler-selection && npm run generate && npm run versions && npm run typecheck:ts6 && npm run typecheck:ts7 && npm run typecheck:heavy:ts6 && npm run typecheck:heavy:ts7 && npm run typecheck:real-world:ts6 && npm run typecheck:real-world:ts7 && npm run compare:diagnostics && npm run collect:extended-diagnostics && npm run benchmark && npm run benchmark:real-world && npm run verify:outputs"
   },
   "devDependencies": {
-    "@typescript/typescript6": "^6.0.0",
+    "@typescript/typescript6": "6.0.2",
     "type-fest": "5.7.0",
-    "typescript": "rc"
+    "typescript": "7.0.2"
   }
 }
