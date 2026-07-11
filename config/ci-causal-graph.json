@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "title": "TypeScript 7 CI causal graph",
+  "description": "Deterministic map from CI checks to root causes, consequences, and first fixes.",
+  "roots": [
+    {
+      "id": "dependency-resolution",
+      "label": "Dependency graph is not reproducible",
+      "priority": 1,
+      "childExplanation": "The instruction book and the Lego pieces do not match.",
+      "consequenceId": "evidence-not-repeatable",
+      "fixId": "restore-locked-install"
+    },
+    {
+      "id": "compiler-identity",
+      "label": "The compared compilers are not the intended compilers",
+      "priority": 1,
+      "childExplanation": "Two runners may be wearing the wrong name tags, so we could time the same runner twice.",
+      "consequenceId": "evidence-invalid",
+      "fixId": "restore-compiler-identity"
+    },
+    {
+      "id": "install-lifecycle",
+      "label": "Install and QA lifecycle contracts disagree",
+      "priority": 2,
+      "childExplanation": "The toy only works when the big repair toolbox is present.",
+      "consequenceId": "package-install-broken",
+      "fixId": "separate-install-and-qa-contracts"
+    },
+    {
+      "id": "evidence-generation",
+      "label": "The evidence run did not produce trustworthy results",
+      "priority": 2,
+      "childExplanation": "The race happened, but the scoreboard is missing or shows different finishes.",
+      "consequenceId": "release-decision-unsafe",
+      "fixId": "repair-evidence-pipeline"
+    },
+    {
+      "id": "evidence-provenance",
+      "label": "The result is not tied to one immutable source",
+      "priority": 3,
+      "childExplanation": "We know a score, but we forgot which race and which day it came from.",
+      "consequenceId": "audit-trail-weak",
+      "fixId": "restore-evidence-provenance"
+    }
+  ],
+  "consequences": [
+    {
+      "id": "evidence-not-repeatable",
+      "label": "Another runner may get a different dependency graph and a different result"
+    },
+    {
+      "id": "evidence-invalid",
+      "label": "Performance and compatibility conclusions may compare the wrong executables"
+    },
+    {
+      "id": "package-install-broken",
+      "label": "Production-only installation can fail before the package is usable"
+    },
+    {
+      "id": "release-decision-unsafe",
+      "label": "A release decision can be made from incomplete or incorrect evidence"
+    },
+    {
+      "id": "audit-trail-weak",
+      "label": "Readers cannot prove which revision, workflow, and artifact support the claim"
+    }
+  ],
+  "fixes": [
+    {
+      "id": "restore-locked-install",
+      "label": "Restore package-lock.json and npm ci before investigating benchmark behavior"
+    },
+    {
+      "id": "restore-compiler-identity",
+      "label": "Repair compiler shims and verify tsc and tsc6 versions before measurement"
+    },
+    {
+      "id": "separate-install-and-qa-contracts",
+      "label": "Allow omit-dev installation while keeping explicit QA verification fail-closed"
+    },
+    {
+      "id": "repair-evidence-pipeline",
+      "label": "Repair the failed QA or output-parity stage and regenerate artifacts"
+    },
+    {
+      "id": "restore-evidence-provenance",
+      "label": "Link immutable commits, workflow runs, artifacts, and synchronized findings"
+    }
+  ],
+  "signals": [
+    {
+      "id": "locked-install",
+      "label": "Locked dependency installation",
+      "rootId": "dependency-resolution",
+      "childSymptom": "The box contains different pieces than the instructions expect."
+    },
+    {
+      "id": "compiler-selection",
+      "label": "Stable QA compiler selection",
+      "rootId": "compiler-identity",
+      "childSymptom": "We cannot prove which runner is TypeScript 6 and which is TypeScript 7."
+    },
+    {
+      "id": "checker-compiler-selection",
+      "label": "Checker-scaling compiler selection",
+      "rootId": "compiler-identity",
+      "childSymptom": "The checker race may use the wrong runners."
+    },
+    {
+      "id": "production-install",
+      "label": "Production-only installation",
+      "rootId": "install-lifecycle",
+      "childSymptom": "The toy cannot be taken out of the box without the repair toolbox."
+    },
+    {
+      "id": "qa-fail-closed",
+      "label": "QA verification fails closed without the toolchain",
+      "rootId": "install-lifecycle",
+      "childSymptom": "The safety lock says everything is fine even when the measuring tools are missing."
+    },
+    {
+      "id": "stable-qa",
+      "label": "Stable compatibility and benchmark QA",
+      "rootId": "evidence-generation",
+      "childSymptom": "The race or its checks did not finish correctly."
+    },
+    {
+      "id": "checker-scaling",
+      "label": "Checker-scaling benchmark",
+      "rootId": "evidence-generation",
+      "childSymptom": "The checker race did not finish or did not produce a trustworthy scoreboard."
+    },
+    {
+      "id": "output-parity",
+      "label": "Normalized output parity",
+      "rootId": "evidence-generation",
+      "childSymptom": "The two builders produced different toys."
+    },
+    {
+      "id": "report-artifacts",
+      "label": "Machine-readable evidence artifacts",
+      "rootId": "evidence-generation",
+      "childSymptom": "The scoreboard paper is missing."
+    },
+    {
+      "id": "immutable-evidence-links",
+      "label": "Immutable evidence references",
+      "rootId": "evidence-provenance",
+      "childSymptom": "The score points to a page that can change later."
+    },
+    {
+      "id": "findings-sync",
+      "label": "Findings and publication status synchronization",
+      "rootId": "evidence-provenance",
+      "childSymptom": "Two notebooks tell different stories about the same race."
+    },
+    {
+      "id": "checker-attribution",
+      "label": "Checker-scaling workflow attribution",
+      "rootId": "evidence-provenance",
+      "childSymptom": "The score is attached to the wrong race."
+    }
+  ]
+}

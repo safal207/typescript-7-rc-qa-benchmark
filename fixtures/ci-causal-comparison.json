@@ -1,0 +1,83 @@
+{
+  "name": "review-council-regression-fixture",
+  "description": "A deterministic failure story based on the TypeScript 7 stable review council. It proves that the graph reduces many alarms to a smaller set of root causes.",
+  "signals": [
+    {
+      "id": "locked-install",
+      "context": "ubuntu-latest",
+      "status": "fail",
+      "detail": "npm ci could not reproduce the reviewed dependency graph"
+    },
+    {
+      "id": "compiler-selection",
+      "context": "ubuntu-latest",
+      "status": "skipped",
+      "detail": "compiler identity could not be checked because installation failed",
+      "blockedBy": ["locked-install"]
+    },
+    {
+      "id": "stable-qa",
+      "context": "ubuntu-latest",
+      "status": "skipped",
+      "detail": "stable QA could not start",
+      "blockedBy": ["locked-install", "compiler-selection"]
+    },
+    {
+      "id": "report-artifacts",
+      "context": "ubuntu-latest",
+      "status": "fail",
+      "detail": "no evidence files were produced",
+      "blockedBy": ["stable-qa"]
+    },
+    {
+      "id": "production-install",
+      "context": "production",
+      "status": "fail",
+      "detail": "omit-dev installation failed during postinstall"
+    },
+    {
+      "id": "qa-fail-closed",
+      "context": "production",
+      "status": "skipped",
+      "detail": "the safety check could not be evaluated because installation failed",
+      "blockedBy": ["production-install"]
+    },
+    {
+      "id": "checker-compiler-selection",
+      "context": "checker-scaling",
+      "status": "fail",
+      "detail": "checker workflow did not verify the selected compilers"
+    },
+    {
+      "id": "output-parity",
+      "context": "windows-latest",
+      "status": "fail",
+      "detail": "normalized output trees differ"
+    },
+    {
+      "id": "immutable-evidence-links",
+      "context": "publication",
+      "status": "fail",
+      "detail": "the report links a mutable branch instead of an immutable revision"
+    },
+    {
+      "id": "findings-sync",
+      "context": "publication",
+      "status": "fail",
+      "detail": "README and detailed finding pages disagree"
+    },
+    {
+      "id": "checker-attribution",
+      "context": "publication",
+      "status": "fail",
+      "detail": "checker-scaling evidence is attributed to the main QA workflow"
+    }
+  ],
+  "expected": {
+    "rawAlarms": 11,
+    "suppressedDownstreamAlarms": 4,
+    "actionableRootCauses": 5,
+    "separateQuestionsSaved": 6,
+    "reductionPercent": 55
+  }
+}

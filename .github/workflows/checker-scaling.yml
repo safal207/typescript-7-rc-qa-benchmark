@@ -4,7 +4,11 @@ on:
   pull_request:
     paths:
       - scripts/benchmark-checker-scaling.mjs
+      - scripts/write-ci-signals.mjs
+      - scripts/ci-causal-graph.mjs
+      - config/ci-causal-graph.json
       - package.json
+      - package-lock.json
       - .github/workflows/checker-scaling.yml
   workflow_dispatch:
     inputs:
@@ -54,9 +58,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install locked dependencies
+        id: install
+        run: npm ci
+
+      - name: Verify compiler selection
+        id: compiler
+        run: npm run verify:compiler-selection
 
       - name: Generate synthetic workloads
         run: npm run generate:synthetic
@@ -67,12 +77,39 @@ jobs:
           PROJECT_FILES_PER_PACKAGE: "12"
 
       - name: Run checker scaling benchmark
+        id: checker_benchmark
         run: npm run benchmark:checkers
         env:
           CHECKER_COUNTS: ${{ github.event_name == 'workflow_dispatch' && inputs.checker_counts || '1,2,4,8,16' }}
           CHECKER_BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
           CHECKER_BENCHMARK_WARMUPS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_warmups || '1' }}
           CHECKER_BENCHMARK_SEED: "20260624"
+
+      - name: Record checker causal signals
+        if: always()
+        env:
+          CI_SIGNAL_PROFILE: checker
+          CI_SIGNAL_CONTEXT: ${{ matrix.os }}
+          LOCKED_INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          COMPILER_SELECTION_OUTCOME: ${{ steps.compiler.outcome }}
+          CHECKER_SCALING_OUTCOME: ${{ steps.checker_benchmark.outcome }}
+        run: node scripts/write-ci-signals.mjs
+
+      - name: Build checker causal report
+        if: always()
+        env:
+          EXPECTED_CI_CONTEXTS: ${{ matrix.os }}
+        run: node scripts/ci-causal-graph.mjs report results results/causal-checker
+
+      - name: Publish checker explanation
+        if: always()
+        shell: bash
+        run: |
+          if [ -f results/causal-checker/child-summary.md ]; then
+            cat results/causal-checker/child-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "_Checker causal report was not generated; see earlier step failures._" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload checker scaling reports
         if: always()
@@ -82,5 +119,7 @@ jobs:
           path: |
             results/checker-scaling.latest.json
             results/checker-scaling.latest.md
+            results/ci-signals-checker-*.json
+            results/causal-checker/
           if-no-files-found: warn
           retention-days: 30

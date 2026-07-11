@@ -1,4 +1,4 @@
-name: TypeScript 7 RC QA
+name: TypeScript 7 Stable QA
 
 on:
   push:
@@ -40,7 +40,7 @@ on:
         default: "2000"
 
 concurrency:
-  group: typescript-7-qa-${{ github.event.pull_request.number || github.ref }}
+  group: typescript-7-stable-qa-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -64,11 +64,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install locked dependencies
+        id: install
+        run: npm ci
 
-      - name: Run QA harness
+      - name: Verify compiler selection
+        id: compiler
+        run: npm run verify:compiler-selection
+
+      - name: Run stable QA harness
+        id: stable_qa
         run: npm run qa
         env:
           GENERATED_MODULES: ${{ github.event_name == 'workflow_dispatch' && inputs.generated_modules || '300' }}
@@ -79,15 +86,153 @@ jobs:
           BENCHMARK_RUNS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_runs || '3' }}
           BENCHMARK_WARMUPS: ${{ github.event_name == 'workflow_dispatch' && inputs.benchmark_warmups || '1' }}
           BOOTSTRAP_RESAMPLES: ${{ github.event_name == 'workflow_dispatch' && inputs.bootstrap_resamples || '400' }}
-          BENCHMARK_SEED: "20260622"
+          BENCHMARK_SEED: "20260710"
           VERIFY_OUTPUT_STRICT: "true"
-          EVIDENCE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && 'full-v2.1' || 'smoke-v2.1' }}
+          EVIDENCE_PROFILE: ${{ github.event_name == 'workflow_dispatch' && 'stable-full-v1' || 'stable-smoke-v1' }}
+
+      - name: Record causal CI signals
+        if: always()
+        env:
+          CI_SIGNAL_PROFILE: stable
+          CI_SIGNAL_CONTEXT: ${{ matrix.os }}
+          LOCKED_INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          COMPILER_SELECTION_OUTCOME: ${{ steps.compiler.outcome }}
+          STABLE_QA_OUTCOME: ${{ steps.stable_qa.outcome }}
+        run: node scripts/write-ci-signals.mjs
 
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: results-${{ matrix.os }}
+          name: stable-results-${{ matrix.os }}
           path: results/
           if-no-files-found: warn
           retention-days: 30
+
+  production-install-contract:
+    name: Production-only install contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install without devDependencies
+        id: production_install
+        run: npm ci --omit=dev
+
+      - name: Verify QA guard still fails closed
+        id: qa_guard
+        shell: bash
+        run: |
+          set +e
+          npm run verify:compiler-selection
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "Compiler verification unexpectedly passed without the benchmark toolchain." >&2
+            exit 1
+          fi
+          echo "Production-only install succeeded; explicit QA verification failed closed as expected."
+
+      - name: Record production causal signals
+        if: always()
+        env:
+          CI_SIGNAL_PROFILE: production
+          CI_SIGNAL_CONTEXT: production
+          CI_SIGNAL_OUTPUT_DIR: results/production-causal
+          PRODUCTION_INSTALL_OUTCOME: ${{ steps.production_install.outcome }}
+          QA_GUARD_OUTCOME: ${{ steps.qa_guard.outcome }}
+        run: node scripts/write-ci-signals.mjs
+
+      - name: Upload production causal signals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-signals-production
+          path: results/production-causal/
+          if-no-files-found: error
+          retention-days: 30
+
+  causal-graph:
+    name: Permanent causal graph and A/B explanation
+    if: always()
+    needs: [compatibility-and-benchmark, production-install-contract]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate graph contract
+        run: npm run causal:validate
+
+      - name: Compare explanation without and with graph
+        run: npm run causal:compare
+
+      - name: Download stable CI signals
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: stable-results-*
+          path: causal-input/stable
+          merge-multiple: false
+
+      - name: Download production CI signals
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-signals-production
+          path: causal-input/production
+
+      - name: Build current-run causal report
+        if: always()
+        env:
+          EXPECTED_CI_CONTEXTS: ubuntu-latest,windows-latest,macos-latest,production
+        run: node scripts/ci-causal-graph.mjs report causal-input results/causal-run
+
+      - name: Publish child-friendly explanation
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Current CI — child-friendly causal explanation"
+            echo
+            if [ -f results/causal-run/child-summary.md ]; then
+              cat results/causal-run/child-summary.md
+            else
+              echo "_Current-run causal report was not generated; see earlier step failures._"
+            fi
+            echo
+            echo "## Permanent A/B contract — without graph vs with graph"
+            echo
+            if [ -f results/causal-comparison/child-summary.md ]; then
+              cat results/causal-comparison/child-summary.md
+            else
+              echo "_A/B causal comparison was not generated; see earlier step failures._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload causal graph reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-causal-graph
+          path: |
+            results/causal-run/
+            results/causal-comparison/
+          if-no-files-found: error
+          retention-days: 90
