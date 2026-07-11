@@ -37,7 +37,7 @@ The final causal job always runs and publishes two views:
 
 A permanent A/B fixture protects the behavior: **11 alarms must collapse to 5 root causes**, saving 6 separate questions and reducing explanation noise by **55%**. CI fails if that comparison changes unexpectedly.
 
-The generated job summary also explains the result using a toy-robot analogy so a child can understand which box should be opened first.
+The first permanent run collected **14 live checks** across Ubuntu, Windows, macOS, and the production-only contract. All 14 passed, so the live graph reported zero active root causes. The generated job summary also explains the result using a toy-robot analogy so a child can understand which box should be opened first.
 
 Read the [permanent CI causal graph contract](docs/ci-causal-graph.md).
 
