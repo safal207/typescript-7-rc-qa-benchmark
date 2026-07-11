@@ -199,6 +199,7 @@ jobs:
           path: causal-input/production
 
       - name: Build current-run causal report
+        if: always()
         env:
           EXPECTED_CI_CONTEXTS: ubuntu-latest,windows-latest,macos-latest,production
         run: node scripts/ci-causal-graph.mjs report causal-input results/causal-run
@@ -210,11 +211,19 @@ jobs:
           {
             echo "## Current CI — child-friendly causal explanation"
             echo
-            cat results/causal-run/child-summary.md
+            if [ -f results/causal-run/child-summary.md ]; then
+              cat results/causal-run/child-summary.md
+            else
+              echo "_Current-run causal report was not generated; see earlier step failures._"
+            fi
             echo
             echo "## Permanent A/B contract — without graph vs with graph"
             echo
-            cat results/causal-comparison/child-summary.md
+            if [ -f results/causal-comparison/child-summary.md ]; then
+              cat results/causal-comparison/child-summary.md
+            else
+              echo "_A/B causal comparison was not generated; see earlier step failures._"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload causal graph reports
