@@ -22,7 +22,7 @@ Read the [stable validation contract](docs/stable-validation-2026-07.md), the [f
 
 ## Permanent CI causal graph
 
-CI now maintains a deterministic causal graph that converts separate red checks into:
+CI maintains a deterministic causal graph that converts separate red checks into:
 
 ```text
 visible alarm -> root cause -> consequence -> first fix
@@ -40,6 +40,32 @@ A permanent A/B fixture protects the behavior: **11 alarms must collapse to 5 ro
 The first permanent run collected **14 live checks** across Ubuntu, Windows, macOS, and the production-only contract. All 14 passed, so the live graph reported zero active root causes. The generated job summary also explains the result using a toy-robot analogy so a child can understand which box should be opened first.
 
 Read the [permanent CI causal graph contract](docs/ci-causal-graph.md).
+
+## Faith, Hope, and Love engineering layer
+
+A deterministic human resilience layer now surrounds the technical causal graph:
+
+| Principle | Engineering role | Purpose |
+|---|---|---|
+| Faith | Assumption contract | Defines what is possible enough to test, while allowing data to correct the assumption. |
+| Hope | Target-state contract | Converts a desired future into a measurable green state and next step. |
+| Love | Care and safety constraint | Prevents the system from hiding truth, blaming people, wasting effort, or trading safety for a green badge. |
+
+The complete execution loop is:
+
+```text
+Faith -> experiment -> evidence -> Hope -> action -> feedback
+                          ↑                         |
+                          └──── assumption update ─┘
+
+Love surrounds the loop as a safety and value constraint.
+```
+
+This layer does **not** change pass/fail status, suppress technical evidence, approve a pull request, or weaken fail-closed behavior. Every technical root cause must have all three contracts, and CI fails if any contract is missing or references an unknown root.
+
+Generated reports include engineering, machine-readable, Mermaid, and child-friendly views for the live run, the permanent A/B fixture, and checker-scaling on every operating system.
+
+Read [Faith, Hope, and Love as an engineering resilience layer](docs/faith-hope-love-engineering.md).
 
 ## TypeScript 7.0.2 stable result
 
@@ -125,6 +151,7 @@ npm run benchmark:real-world
 npm run verify:outputs
 npm run causal:validate
 npm run causal:compare
+npm run resilience:validate
 ```
 
 A full stable evidence run:
@@ -151,6 +178,7 @@ GitHub Actions runs a smaller stable smoke profile for pull requests and exposes
 - Verified compiler-command selection before collecting evidence.
 - Separate production-only installation and strict QA-verification contracts.
 - Deterministic causal mapping from CI signals to root causes, consequences, and first fixes.
+- Mandatory Faith, Hope, and Love contracts for every root cause, without changing technical truth.
 - A permanent A/B fixture proving that the causal view reduces noise.
 - Multiple workloads to avoid overfitting conclusions to one generated shape.
 - Fresh compiler process for every measurement.

@@ -1,7 +1,63 @@
 {
   "version": 1,
   "title": "TypeScript 7 CI causal graph",
-  "description": "Deterministic map from CI checks to root causes, consequences, and first fixes.",
+  "description": "Deterministic map from CI checks to root causes, consequences, first fixes, and a human resilience contract.",
+  "humanResilience": {
+    "version": 1,
+    "title": "Faith, Hope, and Love engineering layer",
+    "rule": "This layer explains and constrains action. It never changes pass/fail status or replaces evidence.",
+    "principles": {
+      "faith": {
+        "engineeringName": "Assumption contract",
+        "question": "What do we treat as possible enough to test?",
+        "global": "The system can become more trustworthy through testable changes and corrected assumptions.",
+        "child": "We believe the robot can be fixed, so we try one careful test."
+      },
+      "hope": {
+        "engineeringName": "Target-state contract",
+        "question": "What does a healthy future state look like?",
+        "global": "Every active root cause must point to a measurable green state and a next step.",
+        "child": "We know what green lights should look like and which box to open next."
+      },
+      "love": {
+        "engineeringName": "Care and safety constraint",
+        "question": "Who or what must not be harmed while we fix the system?",
+        "global": "Do not hide evidence, blame people, waste effort on downstream symptoms, or trade human safety for a green badge.",
+        "child": "We repair the robot without hurting the people using it or pretending a red light is green."
+      }
+    },
+    "execution": {
+      "action": "Apply the smallest root-level fix that preserves the evidence contract.",
+      "feedback": "Rerun the affected signals, compare immutable evidence, and revise the assumption when data disagrees."
+    },
+    "rootContracts": {
+      "dependency-resolution": {
+        "faith": "A committed dependency graph can reproduce the same reviewed toolchain on every supported runner.",
+        "hope": "Ubuntu, Windows, and macOS install the same locked graph and produce comparable evidence.",
+        "love": "Do not blame contributors or rerun blindly; preserve installation logs, fix the lock contract, and avoid wasting compute."
+      },
+      "compiler-identity": {
+        "faith": "Compiler identity can be verified before any compatibility or performance measurement begins.",
+        "hope": "Every benchmark label runs the intended executable and exact version on every platform.",
+        "love": "Never publish a speedup from ambiguous identities; fail closed rather than tell a convincing false story."
+      },
+      "install-lifecycle": {
+        "faith": "Production installation and benchmark QA can coexist as separate, explicit contracts.",
+        "hope": "Production-only installation succeeds while explicit QA refuses to fake confidence when its tools are absent.",
+        "love": "Do not force production users to install benchmark-only tools, and do not weaken QA merely to obtain a green check."
+      },
+      "evidence-generation": {
+        "faith": "A failed evidence pipeline can be repaired and rerun deterministically.",
+        "hope": "All checks complete, output parity is measured, and machine-readable artifacts are preserved.",
+        "love": "Keep raw failures and outliers visible; do not let summary errors, retries, or formatting hide the original signal."
+      },
+      "evidence-provenance": {
+        "faith": "Every published claim can be tied to immutable source, workflow, and artifact identities.",
+        "hope": "A reader can trace each conclusion back to the exact commit, run, artifact, and synchronized finding.",
+        "love": "Do not overstate results or let mutable documentation rewrite history after people rely on the claim."
+      }
+    }
+  },
   "roots": [
     {
       "id": "dependency-resolution",

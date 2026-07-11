@@ -6,6 +6,7 @@ on:
       - scripts/benchmark-checker-scaling.mjs
       - scripts/write-ci-signals.mjs
       - scripts/ci-causal-graph.mjs
+      - scripts/ci-human-resilience.mjs
       - config/ci-causal-graph.json
       - package.json
       - package-lock.json
@@ -95,11 +96,27 @@ jobs:
           CHECKER_SCALING_OUTCOME: ${{ steps.checker_benchmark.outcome }}
         run: node scripts/write-ci-signals.mjs
 
+      - name: Validate Faith Hope Love engineering contract
+        if: always()
+        run: npm run resilience:validate
+
       - name: Build checker causal report
         if: always()
         env:
           EXPECTED_CI_CONTEXTS: ${{ matrix.os }}
         run: node scripts/ci-causal-graph.mjs report results results/causal-checker
+
+      - name: Build checker human resilience report
+        if: always()
+        shell: bash
+        run: |
+          if [ -f results/causal-checker/analysis.json ]; then
+            node scripts/ci-human-resilience.mjs report \
+              results/causal-checker/analysis.json \
+              results/causal-checker
+          else
+            echo "Checker causal analysis is unavailable; resilience report was not generated."
+          fi
 
       - name: Publish checker explanation
         if: always()
@@ -109,6 +126,12 @@ jobs:
             cat results/causal-checker/child-summary.md >> "$GITHUB_STEP_SUMMARY"
           else
             echo "_Checker causal report was not generated; see earlier step failures._" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo >> "$GITHUB_STEP_SUMMARY"
+          if [ -f results/causal-checker/resilience-child-summary.md ]; then
+            cat results/causal-checker/resilience-child-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "_Human resilience report was not generated; evidence status remains authoritative._" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload checker scaling reports
