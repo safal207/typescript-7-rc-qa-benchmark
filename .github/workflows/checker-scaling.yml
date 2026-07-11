@@ -104,7 +104,12 @@ jobs:
       - name: Publish checker explanation
         if: always()
         shell: bash
-        run: cat results/causal-checker/child-summary.md >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          if [ -f results/causal-checker/child-summary.md ]; then
+            cat results/causal-checker/child-summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "_Checker causal report was not generated; see earlier step failures._" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload checker scaling reports
         if: always()
