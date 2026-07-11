@@ -162,7 +162,7 @@ jobs:
           retention-days: 30
 
   causal-graph:
-    name: Permanent causal graph and A/B explanation
+    name: Permanent causal graph and human resilience explanation
     if: always()
     needs: [compatibility-and-benchmark, production-install-contract]
     runs-on: ubuntu-latest
@@ -180,8 +180,23 @@ jobs:
       - name: Validate graph contract
         run: npm run causal:validate
 
+      - name: Validate Faith Hope Love engineering contract
+        run: npm run resilience:validate
+
       - name: Compare explanation without and with graph
         run: npm run causal:compare
+
+      - name: Build A/B human resilience report
+        if: always()
+        shell: bash
+        run: |
+          if [ -f results/causal-comparison/analysis.json ]; then
+            node scripts/ci-human-resilience.mjs report \
+              results/causal-comparison/analysis.json \
+              results/causal-comparison
+          else
+            echo "A/B causal analysis is unavailable; resilience report was not generated."
+          fi
 
       - name: Download stable CI signals
         continue-on-error: true
@@ -204,6 +219,18 @@ jobs:
           EXPECTED_CI_CONTEXTS: ubuntu-latest,windows-latest,macos-latest,production
         run: node scripts/ci-causal-graph.mjs report causal-input results/causal-run
 
+      - name: Build current-run human resilience report
+        if: always()
+        shell: bash
+        run: |
+          if [ -f results/causal-run/analysis.json ]; then
+            node scripts/ci-human-resilience.mjs report \
+              results/causal-run/analysis.json \
+              results/causal-run
+          else
+            echo "Current causal analysis is unavailable; resilience report was not generated."
+          fi
+
       - name: Publish child-friendly explanation
         if: always()
         shell: bash
@@ -217,12 +244,28 @@ jobs:
               echo "_Current-run causal report was not generated; see earlier step failures._"
             fi
             echo
+            echo "## Faith, Hope, and Love — engineering layer"
+            echo
+            if [ -f results/causal-run/resilience-child-summary.md ]; then
+              cat results/causal-run/resilience-child-summary.md
+            else
+              echo "_Human resilience report was not generated; evidence status remains authoritative._"
+            fi
+            echo
             echo "## Permanent A/B contract — without graph vs with graph"
             echo
             if [ -f results/causal-comparison/child-summary.md ]; then
               cat results/causal-comparison/child-summary.md
             else
               echo "_A/B causal comparison was not generated; see earlier step failures._"
+            fi
+            echo
+            echo "## A/B human resilience contract"
+            echo
+            if [ -f results/causal-comparison/resilience-child-summary.md ]; then
+              cat results/causal-comparison/resilience-child-summary.md
+            else
+              echo "_A/B human resilience report was not generated._"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
