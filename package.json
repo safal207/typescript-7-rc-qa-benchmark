@@ -28,6 +28,7 @@
     "verify:outputs": "node scripts/verify-outputs.mjs",
     "causal:validate": "node scripts/ci-causal-graph.mjs validate",
     "causal:compare": "node scripts/ci-causal-graph.mjs compare",
+    "resilience:validate": "node scripts/ci-human-resilience.mjs validate",
     "qa": "npm run verify:compiler-selection && npm run generate && npm run versions && npm run typecheck:ts6 && npm run typecheck:ts7 && npm run typecheck:heavy:ts6 && npm run typecheck:heavy:ts7 && npm run typecheck:real-world:ts6 && npm run typecheck:real-world:ts7 && npm run compare:diagnostics && npm run collect:extended-diagnostics && npm run benchmark && npm run benchmark:real-world && npm run verify:outputs"
   },
   "devDependencies": {
