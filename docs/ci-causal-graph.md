@@ -71,7 +71,7 @@ Each matrix job creates its own causal report and child-friendly summary.
 
 [`fixtures/ci-causal-comparison.json`](../fixtures/ci-causal-comparison.json) contains a reviewed failure story based on the TypeScript 7 stable review council.
 
-Expected result:
+Expected and first validated result:
 
 | View | What the reader sees |
 |---|---:|
@@ -81,7 +81,15 @@ Expected result:
 | Separate questions saved | 6 |
 | Noise reduction | 55% |
 
-CI fails if these values change unexpectedly. This prevents the graph from becoming decorative documentation that no longer reduces noise.
+The first permanent validation completed in stable QA run `29139225752`. The live run collected 14 checks across Ubuntu, Windows, macOS, and the production-only contract; all 14 passed and the graph reported zero active root causes. The permanent A/B fixture matched every expected value exactly.
+
+Evidence artifact:
+
+- artifact `8244612806`;
+- digest `sha256:6a2b7eb79075d867f3ca0ede13f3aa727836b133d9c31dd0831458bd372d2cf7`;
+- retained for 90 days.
+
+CI fails if the fixture values change unexpectedly. This prevents the graph from becoming decorative documentation that no longer reduces noise.
 
 ## Generated files
 
