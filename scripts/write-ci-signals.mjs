@@ -92,6 +92,13 @@ if (profile === "stable") {
       status: statusFromOutcome(process.env.COMPILER_SELECTION_OUTCOME),
       detail: `checker compiler-selection outcome: ${process.env.COMPILER_SELECTION_OUTCOME ?? "unknown"}`,
       blockedBy: ["locked-install"]
+    },
+    {
+      id: "checker-scaling",
+      context,
+      status: statusFromOutcome(process.env.CHECKER_SCALING_OUTCOME),
+      detail: `checker-scaling outcome: ${process.env.CHECKER_SCALING_OUTCOME ?? "unknown"}`,
+      blockedBy: ["locked-install", "checker-compiler-selection"]
     }
   );
 } else {
