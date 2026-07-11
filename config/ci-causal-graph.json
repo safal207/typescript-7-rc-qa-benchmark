@@ -126,6 +126,12 @@
       "childSymptom": "The race or its checks did not finish correctly."
     },
     {
+      "id": "checker-scaling",
+      "label": "Checker-scaling benchmark",
+      "rootId": "evidence-generation",
+      "childSymptom": "The checker race did not finish or did not produce a trustworthy scoreboard."
+    },
+    {
       "id": "output-parity",
       "label": "Normalized output parity",
       "rootId": "evidence-generation",
