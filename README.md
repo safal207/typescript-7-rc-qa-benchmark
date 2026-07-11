@@ -20,6 +20,27 @@ Production-only installs are also supported: `npm ci --omit=dev` skips shim repa
 
 Read the [stable validation contract](docs/stable-validation-2026-07.md), the [full stable evidence report](docs/results/2026-07-10-typescript-7-stable-full.md), and the [three-reviewer causal adjudication](docs/review-council-2026-07-10.md).
 
+## Permanent CI causal graph
+
+CI now maintains a deterministic causal graph that converts separate red checks into:
+
+```text
+visible alarm -> root cause -> consequence -> first fix
+```
+
+Every stable QA runner records locked installation, compiler identity, QA completion, and report-artifact signals. The production-install job records omit-dev installation and the fail-closed safety contract. Checker-scaling records its own installation, compiler identity, and benchmark signals.
+
+The final causal job always runs and publishes two views:
+
+- **without graph:** every failed or skipped check appears as a separate alarm;
+- **with graph:** downstream alarms are suppressed and grouped under the first actionable cause.
+
+A permanent A/B fixture protects the behavior: **11 alarms must collapse to 5 root causes**, saving 6 separate questions and reducing explanation noise by **55%**. CI fails if that comparison changes unexpectedly.
+
+The generated job summary also explains the result using a toy-robot analogy so a child can understand which box should be opened first.
+
+Read the [permanent CI causal graph contract](docs/ci-causal-graph.md).
+
 ## TypeScript 7.0.2 stable result
 
 The 2026-07-10 full evidence run used 2 warm-ups and 15 measured randomized rounds per scenario on GitHub-hosted Ubuntu, Windows, and macOS runners.
@@ -102,6 +123,8 @@ npm run benchmark
 npm run benchmark:checkers
 npm run benchmark:real-world
 npm run verify:outputs
+npm run causal:validate
+npm run causal:compare
 ```
 
 A full stable evidence run:
@@ -127,6 +150,8 @@ GitHub Actions runs a smaller stable smoke profile for pull requests and exposes
 - `npm ci` for evidence workflows.
 - Verified compiler-command selection before collecting evidence.
 - Separate production-only installation and strict QA-verification contracts.
+- Deterministic causal mapping from CI signals to root causes, consequences, and first fixes.
+- A permanent A/B fixture proving that the causal view reduces noise.
 - Multiple workloads to avoid overfitting conclusions to one generated shape.
 - Fresh compiler process for every measurement.
 - Setup and output cleanup excluded from the measured interval.
