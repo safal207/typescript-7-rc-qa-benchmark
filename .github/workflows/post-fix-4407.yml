@@ -1,0 +1,121 @@
+name: Verify TypeScript-Go #4407 post-fix commit
+
+on:
+  push:
+    branches:
+      - agent/verify-tsgo-4407
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-post-fix-source:
+    name: ${{ matrix.os }} / source commit
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout benchmark repository
+        uses: actions/checkout@v4
+
+      - name: Checkout microsoft/typescript-go at merged fix commit
+        uses: actions/checkout@v4
+        with:
+          repository: microsoft/typescript-go
+          ref: bbdf7a24bee7ff1c9358c9f8921359966b762f1a
+          path: upstream
+          fetch-depth: 1
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: upstream/go.mod
+          cache-dependency-path: upstream/go.sum
+
+      - name: Build exact merged TypeScript-Go source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          cd upstream
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            out="../evidence/tsgo.exe"
+          else
+            out="../evidence/tsgo"
+          fi
+          go build -trimpath -o "$out" ./cmd/tsgo
+          "$out" --version | tee ../evidence/version.txt
+          git rev-parse HEAD | tee ../evidence/upstream-commit.txt
+
+      - name: Create deterministic type-error fixture
+        shell: bash
+        run: |
+          cat > evidence/type-error.ts <<'EOF'
+          const value: string = 42;
+          EOF
+
+      - name: Verify restored noEmit exit status semantics
+        shell: bash
+        run: |
+          set -uo pipefail
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            tsgo="./evidence/tsgo.exe"
+          else
+            tsgo="./evidence/tsgo"
+          fi
+
+          set +e
+          "$tsgo" --noEmit --pretty false evidence/type-error.ts > evidence/diagnostics.txt 2>&1
+          status=$?
+          set -e
+
+          printf '%s\n' "$status" | tee evidence/exit-code.txt
+          cat evidence/diagnostics.txt
+
+          if [[ "$status" -ne 2 ]]; then
+            echo "Expected exit code 2 for diagnostics with --noEmit; got $status" >&2
+            exit 1
+          fi
+
+          if ! grep -q "TS2322" evidence/diagnostics.txt; then
+            echo "Expected TS2322 diagnostic was not observed" >&2
+            exit 1
+          fi
+
+      - name: Write evidence summary
+        if: always()
+        shell: bash
+        env:
+          FIX_PR: "4407"
+          FIX_COMMIT: "bbdf7a24bee7ff1c9358c9f8921359966b762f1a"
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const read = p => fs.existsSync(p) ? fs.readFileSync(p, 'utf8').trim() : null;
+          const summary = {
+            fix_pr: Number(process.env.FIX_PR),
+            fix_commit: process.env.FIX_COMMIT,
+            runner_os: process.env.RUNNER_OS,
+            tsgo_version: read('evidence/version.txt'),
+            checked_out_commit: read('evidence/upstream-commit.txt'),
+            exit_code: read('evidence/exit-code.txt') === null ? null : Number(read('evidence/exit-code.txt')),
+            expected_exit_code: 2,
+            diagnostic_ts2322_present: (read('evidence/diagnostics.txt') || '').includes('TS2322'),
+          };
+          fs.writeFileSync('evidence/summary.json', JSON.stringify(summary, null, 2) + '\n');
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Upload immutable verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-fix-4407-${{ matrix.os }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 90
