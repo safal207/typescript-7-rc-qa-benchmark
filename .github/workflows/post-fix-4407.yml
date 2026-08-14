@@ -70,7 +70,7 @@ jobs:
           fi
 
           set +e
-          "$tsgo" --noEmit --pretty false evidence/type-error.ts > evidence/diagnostics.txt 2>&1
+          "$tsgo" --noEmit --pretty false --ignoreConfig evidence/type-error.ts > evidence/diagnostics.txt 2>&1
           status=$?
           set -e
 
